@@ -515,7 +515,7 @@ void MainWindow::updateHoldingRegisters(quint8 id)
 
     ui->twHoldingRedisters->setRowCount(0);
 
-    for (int i = 0; i < slave->getHoldingRegistersCount(); i++)
+    for (int i = 0; i < 65535; i++)
     {
         ui->twHoldingRedisters->insertRow(i);
 
