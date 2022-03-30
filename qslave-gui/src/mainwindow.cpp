@@ -13,6 +13,7 @@
 
 #include    "CfgReader.h"
 
+#define NUMBER_OF_HOLDING_REGISTERS 65535
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
@@ -515,7 +516,7 @@ void MainWindow::updateHoldingRegisters(quint8 id)
 
     ui->twHoldingRedisters->setRowCount(0);
 
-    for (int i = 0; i < 65535; i++)
+    for (int i = 0; i < NUMBER_OF_HOLDING_REGISTERS; i++)
     {
         ui->twHoldingRedisters->insertRow(i);
 
