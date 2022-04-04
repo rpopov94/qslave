@@ -1,6 +1,6 @@
 #include    "mainwindow.h"
 #include    "ui_mainwindow.h"
-
+#include    <typeinfo>
 #include    <QComboBox>
 #include    <QPushButton>
 #include    <QSerialPortInfo>
@@ -10,10 +10,9 @@
 #include    <QAction>
 #include    <QFileDialog>
 #include    <QStandardPaths>
-
+#include    <QDebug>
 #include    "CfgReader.h"
 
-#define NUMBER_OF_HOLDING_REGISTERS 65535
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
@@ -230,13 +229,9 @@ void MainWindow::loadDiscreteValues(QString cfg_path,
             int tmp = 0;
             if (cfg.getInt(sec_node, "address", tmp))
                 dv.address = static_cast<quint16>(tmp);
-            else
-                dv.address = default_address;
 
             if (cfg.getInt(sec_node, "value", tmp))
                 dv.value = static_cast<bool>(tmp);
-            else
-                dv.value = false;
 
             if (!cfg.getString(sec_node, "description", dv.description))
                 dv.description = sectionName + " #" + QString::number(dv.address);
@@ -296,13 +291,9 @@ void MainWindow::loadRegisterValues(QString cfg_path,
             int tmp = 0;
             if (cfg.getInt(sec_node, "address", tmp))
                 rv.address = static_cast<quint16>(tmp);
-            else
-                rv.address = default_address;
 
             if (cfg.getInt(sec_node, "value", tmp))
                 rv.value = static_cast<quint16>(tmp);
-            else
-                rv.value = 0;
 
             if (!cfg.getString(sec_node, "description", rv.description))
                 rv.description = sectionName + " #" + QString::number(rv.address);
@@ -512,27 +503,32 @@ void MainWindow::updateHoldingRegisters(quint8 id)
     if (id != getSlaveByIndex(idx)->getID())
         return;
 
+    ui->twHoldingRedisters->setRowCount(0);
     Slave *slave = modnet->getSlaves()[id];
 
-    ui->twHoldingRedisters->setRowCount(0);
+    int i = 0;
 
-    for (int i = 0; i < NUMBER_OF_HOLDING_REGISTERS; i++)
+    foreach (data_unit_t<quint16> key, slave->getHoldingRegisters())
     {
-        ui->twHoldingRedisters->insertRow(i);
+        if(key.description.length()>0){
+                int value = static_cast<int>(slave->getHoldingRegister(key.address));
 
-        ui->twHoldingRedisters->setItem(i,
-                             ADDRESS_COL,
-                             new QTableWidgetItem(QString::number(HL_INIT_ADDRESS + i)));
+                qDebug()<<i<<' '<<slave->getHoldingRegisterDescription(i)<<' '<<value;
 
-        ui->twHoldingRedisters->setItem(i,
-                             DESC_COL,
-                             new QTableWidgetItem(slave->getHoldingRegisterDescription(HL_INIT_ADDRESS + i)));
+                ui->twHoldingRedisters->insertRow(i);
 
-        int value = static_cast<int>(slave->getHoldingRegister(HL_INIT_ADDRESS + i));
+                ui->twHoldingRedisters->setItem(i,
+                                     ADDRESS_COL,
+                                     new QTableWidgetItem(QString::number(key.address)));
 
-        ui->twHoldingRedisters->setItem(i,
-                             VALUE_COL,
-                             new QTableWidgetItem(QString::number(value)));
+                ui->twHoldingRedisters->setItem(i,
+                                     DESC_COL,
+                                     new QTableWidgetItem(key.description));/*slave->getDiscreteInputDescription(key.address)*/
+                ui->twHoldingRedisters->setItem(i,
+                                     VALUE_COL,
+                                     new QTableWidgetItem(QString::number(value)));
+                i++;
+        }
     }
 }
 
@@ -560,7 +556,7 @@ void MainWindow::updateDiscreteInputs(quint8 id)
 
         ui->twDiscreteInputs->setItem(i,
                              DESC_COL,
-							 new QTableWidgetItem(slave->getDiscreteInputDescription(key.address)));
+                             new QTableWidgetItem(key.description));/*slave->getDiscreteInputDescription(key.address)*/
 
 		int value = static_cast<int>(slave->getDiscreteInput(key.address));
 
@@ -594,7 +590,7 @@ void MainWindow::updateInputRegisters(quint8 id)
 
         ui->twInputRegisters->setItem(i,
                              DESC_COL,
-							 new QTableWidgetItem(slave->getInputRegisterDescription(key.address)));
+                             new QTableWidgetItem(key.description));
 
 		int value = static_cast<int>(slave->getInputRegister(key.address));
 
@@ -652,6 +648,8 @@ void MainWindow::onCoilChanged(int row, int column)
 //------------------------------------------------------------------------------
 void MainWindow::onInputRegisterChanged(int row, int column)
 {
+//    ui->twInputRegisters->clear();
+
     if (column != VALUE_COL)
         return;
 
@@ -725,5 +723,3 @@ void MainWindow::onOpenFileMenu()
 
     loadNetworkConfig(filePath);
 }
-
-
