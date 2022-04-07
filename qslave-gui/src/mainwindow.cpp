@@ -703,7 +703,11 @@ void MainWindow::onApplicationQuit()
 //------------------------------------------------------------------------------
 void MainWindow::onOpenFileMenu()
 {
-    QString configDir = ".qslave";
+
+    disconnect(ui->lwSlavesList, &QListWidget::currentItemChanged,
+            this, &MainWindow::activeSlaveChanged);
+
+    QString configDir = "conf";
     QString homeDir = QStandardPaths::locate(QStandardPaths::HomeLocation,
                                              QString(),
                                              QStandardPaths::LocateDirectory);
@@ -719,7 +723,10 @@ void MainWindow::onOpenFileMenu()
                                                     fullPath,
                                                     "*.net");
     modnet->clear();
+
     ui->lwSlavesList->clear();
+    connect(ui->lwSlavesList, &QListWidget::currentItemChanged,
+            this, &MainWindow::activeSlaveChanged);
 
     loadNetworkConfig(filePath);
 }
